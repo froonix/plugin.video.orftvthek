@@ -1,15 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-from future.standard_library import install_aliases
-install_aliases()
-
 import datetime
 import sys
 import time
-import urllib.error
-import urllib.parse
-import urllib.request
+import urllib
+import urllib2
 
 import simplejson as json
 import xbmcaddon
@@ -55,7 +51,7 @@ class serviceAPI(Scraper):
 		try:
 			response = self.__makeRequest(self.serviceAPIHighlights)
 			responseCode = response.getcode()
-		except urllib.error.HTTPError as error:
+		except urllib2.HTTPError as error:
 			responseCode = error.getcode()
 
 		if responseCode == 200:
@@ -68,7 +64,7 @@ class serviceAPI(Scraper):
 		try:
 			response = self.__makeRequest(self.__urlMostViewed)
 			responseCode = response.getcode()
-		except urllib.error.HTTPError as error:
+		except urllib2.HTTPError as error:
 			responseCode = error.getcode()
 
 		if responseCode == 200:
@@ -91,7 +87,7 @@ class serviceAPI(Scraper):
 		try:
 			response = self.__makeRequest(urlAPI)
 			responseCode = response.getcode()
-		except urllib.error.HTTPError as error:
+		except urllib2.HTTPError as error:
 			responseCode = error.getcode()
 
 		if responseCode == 200:
@@ -143,7 +139,7 @@ class serviceAPI(Scraper):
 		try:
 			response = self.__makeRequest(self.__urlShows)
 			responseCode = response.getcode()
-		except urllib.error.HTTPError as error:
+		except urllib2.HTTPError as error:
 			responseCode = error.getcode()
 
 		if responseCode == 200:
@@ -224,7 +220,7 @@ class serviceAPI(Scraper):
 			responseCode = response.getcode()
 		except ValueError as error:
 			responseCode = 404
-		except urllib.error.HTTPError as error:
+		except urllib2.HTTPError as error:
 			responseCode = error.getcode()
 
 		if responseCode == 200:
@@ -245,7 +241,7 @@ class serviceAPI(Scraper):
 			responseCode = response.getcode()
 		except ValueError as error:
 			responseCode = 404
-		except urllib.error.HTTPError as error:
+		except urllib2.HTTPError as error:
 			responseCode = error.getcode()
 
 		if responseCode == 200:
@@ -266,7 +262,7 @@ class serviceAPI(Scraper):
 			if x == 8:
 				title = 'älter als %s' % title
 				parameters = {'mode' : 'openDate', 'link': date.strftime('%Y-%m-%d'), 'from': (date - datetime.timedelta(days=150)).strftime('%Y-%m-%d')}
-			u = sys.argv[0] + '?' + urllib.parse.urlencode(parameters)
+			u = sys.argv[0] + '?' + urllib.urlencode(parameters)
 			createListItem(title, None, None, None, date.strftime('%Y-%m-%d'), '', u, False, True, self.defaultbackdrop,self.pluginhandle)
 
 	# Returns Live Stream Listing
@@ -274,7 +270,7 @@ class serviceAPI(Scraper):
 		try:
 			response = self.__makeRequest(self.__urlLive)
 			responseCode = response.getcode()
-		except urllib.error.HTTPError as error:
+		except urllib2.HTTPError as error:
 			responseCode = error.getcode()
 
 		if responseCode == 200:
@@ -301,7 +297,7 @@ class serviceAPI(Scraper):
 					if inputstreamAdaptive and result.get('restart'):
 						contextMenuItems.append(('Restart', 'RunPlugin(plugin://%s/?mode=liveStreamRestart&link=%s)' % (xbmcaddon.Addon().getAddonInfo('id'), result.get('id'))))
 				else:
-					link = sys.argv[0] + '?' + urllib.parse.urlencode({'mode': 'liveStreamNotOnline', 'link': result.get('id')})
+					link = sys.argv[0] + '?' + urllib.urlencode({'mode': 'liveStreamNotOnline', 'link': result.get('id')})
 
 				title = "[%s]%s %s (%s)" % (programName, '[Restart]' if inputstreamAdaptive and result.get('restart') else '', result.get('title'), time.strftime('%H:%M', livestreamStart))
 
@@ -315,7 +311,7 @@ class serviceAPI(Scraper):
 		try:
 			response = self.__makeRequest('livestream/' + link)
 			responseCode = response.getcode()
-		except urllib.error.HTTPError as error:
+		except urllib2.HTTPError as error:
 			responseCode = error.getcode()
 
 		if responseCode == 200:
@@ -347,7 +343,7 @@ class serviceAPI(Scraper):
 		try:
 			response = self.__makeRequest('livestream/' + link)
 			responseCode = response.getcode()
-		except urllib.error.HTTPError as error:
+		except urllib2.HTTPError as error:
 			responseCode = error.getcode()
 
 		if responseCode == 200:
@@ -364,7 +360,7 @@ class serviceAPI(Scraper):
 			if bitmovinStreamId:
 				bitmovinStreamId = bitmovinStreamId.replace("https://playerapi-restarttv.ors.at/livestreams/","").replace("/sections/","")
 				bitmovinStreamId = bitmovinStreamId.split("?")[0]
-			response = urllib.request.urlopen('https://playerapi-restarttv.ors.at/livestreams/%s/sections/?state=active&X-Api-Key=%s' % (bitmovinStreamId, ApiKey)) # nosec
+			response = urllib2.urlopen('https://playerapi-restarttv.ors.at/livestreams/%s/sections/?state=active&X-Api-Key=%s' % (bitmovinStreamId, ApiKey)) # nosec
 			section = json.loads(response.read().decode('UTF-8'))[0]
 
 			streamingURL = 'https://playerapi-restarttv.ors.at/livestreams/%s/sections/%s/manifests/hls/?startTime=%s&X-Api-Key=%s' % (bitmovinStreamId, section.get('id'), section.get('metaData').get('timestamp'), ApiKey)
@@ -376,9 +372,9 @@ class serviceAPI(Scraper):
 
 
 	def __makeRequest(self, url):
-		request = urllib.request.Request(self.__urlBase + url) # nosec
+		request = urllib2.Request(self.__urlBase + url) # nosec
 		request.add_header('Authorization', 'Basic %s' % 'cHNfYW5kcm9pZF92Mzo2YTYzZDRkYTI5YzcyMWQ0YTk4NmZkZDMxZWRjOWU0MQ==')
-		return urllib.request.urlopen(request) # nosec
+		return urllib2.urlopen(request) # nosec
 
 
 	def __JSONEpisode2ListItem(self, JSONEpisode, ignoreEpisodeType = None):
@@ -393,7 +389,7 @@ class serviceAPI(Scraper):
 			JSONEpisode.get('duration_seconds'),
 			time.strftime('%Y-%m-%d', time.strptime(JSONEpisode.get('date')[0:19], '%Y-%m-%dT%H:%M:%S')),
 			JSONEpisode.get('_embedded').get('channel').get('name') if JSONEpisode.get('_embedded').get('channel') != None else None,
-			sys.argv[0] + '?' + urllib.parse.urlencode({'mode' : 'openEpisode', 'link': JSONEpisode.get('id')}),
+			sys.argv[0] + '?' + urllib.urlencode({'mode' : 'openEpisode', 'link': JSONEpisode.get('id')}),
 			False,
 			True,
 			self.defaultbackdrop,
@@ -409,7 +405,7 @@ class serviceAPI(Scraper):
 			None,
 			None,
 			None,
-			sys.argv[0] + '?' + urllib.parse.urlencode({'mode' : 'openProgram', 'link': jsonProfile.get('id')}),
+			sys.argv[0] + '?' + urllib.urlencode({'mode' : 'openProgram', 'link': jsonProfile.get('id')}),
 			False,
 			True,
 			self.defaultbackdrop,

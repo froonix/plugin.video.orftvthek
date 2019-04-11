@@ -1,15 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-from future.standard_library import install_aliases
-install_aliases()
-
 import os
 import re
 import sys
-import urllib.error
-import urllib.parse
-import urllib.request
+import urllib
 
 import simplejson as json
 import xbmc
@@ -21,7 +16,7 @@ from .helpers import *
 
 def addDirectory(title,banner,backdrop, description,link,mode,pluginhandle):
     parameters = {"link" : link, "mode" : mode}
-    u = sys.argv[0] + '?' + urllib.parse.urlencode(parameters)
+    u = sys.argv[0] + '?' + urllib.urlencode(parameters)
     createListItem(title,banner,description,'','','',u, False,True, backdrop,pluginhandle,None)
 
 def generateAddonVideoUrl(videourl):
@@ -37,7 +32,7 @@ def buildLink(link):
         
 def createPlayAllItem(name,pluginhandle):
     play_all_parameters = {"mode" : "playlist"}
-    play_all_url = sys.argv[0] + '?' + urllib.parse.urlencode(play_all_parameters)
+    play_all_url = sys.argv[0] + '?' + urllib.urlencode(play_all_parameters)           
     play_all_item = xbmcgui.ListItem(name)
     play_all_item.setInfo(type="Video", infoLabels={"Title": name, "Plot": ""})
     xbmcplugin.addDirectoryItem(pluginhandle,play_all_url,play_all_item,isFolder = False,totalItems = -1)
@@ -100,7 +95,7 @@ def createListItem(title,banner,description,duration,date,channel,videourl,playa
             bl_title = title.replace("+"," ").strip()
 
         blparameters = {"mode" : "blacklistShow", "link": bl_title}
-        blurl = sys.argv[0] + '?' + urllib.parse.urlencode(blparameters)
+        blurl = sys.argv[0] + '?' + urllib.urlencode(blparameters)
         contextMenuItems.append(('%s %s %s' % (Settings.localizedString(30038).encode("utf-8"), bl_title, Settings.localizedString(30042).encode("utf-8")), 'XBMC.RunPlugin(%s)' % blurl))
         if checkBlacklist(bl_title):
             return
@@ -143,7 +138,7 @@ def printBlacklist(banner,backdrop,translation,pluginhandle):
             for item in data:
                 item = item.encode('UTF-8')
                 description = translation(30040).encode('UTF-8') % item
-                createListItem(item, banner, description, None, None, None, sys.argv[0] + '?' + urllib.parse.urlencode({'link': item, 'mode': 'unblacklistShow'}), True, False, backdrop, pluginhandle)
+                createListItem(item, banner, description, None, None, None, sys.argv[0] + '?' + urllib.urlencode({'link': item, 'mode': 'unblacklistShow'}), True, False, backdrop, pluginhandle)
 
 
 def setBlacklist(data,file):
@@ -160,7 +155,7 @@ def getBlacklist(file):
 def blacklistItem(title):
     addonUserDataFolder = xbmc.translatePath("special://profile/addon_data/plugin.video.orftvthek");
     bl_json_file = os.path.join(addonUserDataFolder, 'blacklist.json')
-    title = urllib.parse.unquote(title).replace("+"," ").strip()
+    title = urllib.unquote(title).replace("+"," ").strip()
     #check if file exists
     if os.path.exists(bl_json_file):
         #check if file already has an entry
@@ -185,5 +180,5 @@ def blacklistItem(title):
 
 
 def unblacklistItem(title):
-    title = urllib.parse.unquote(title).replace("+"," ").strip()
+    title = urllib.unquote(title).replace("+"," ").strip()
     removeBlacklist(title)

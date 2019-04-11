@@ -1,15 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-from future.standard_library import install_aliases
-install_aliases()
-
 import os.path
 import socket
 import sys
-import urllib.error
-import urllib.parse
-import urllib.request
+import urllib
 
 import CommonFunctions as common
 import xbmcaddon
@@ -84,7 +79,7 @@ link=params.get('link')
 if mode:
     debugLog("Mode: %s" % mode,'Info')
 if link:
-    debugLog("Link: %s" % urllib.parse.unquote(link),'Info')
+    debugLog("Link: %s" % urllib.unquote(link),'Info')
 
 
 def getMainMenu():
@@ -129,13 +124,13 @@ if mode == 'openSeries':
         listCallback(False,pluginhandle)
         ok = xbmcgui.Dialog().yesno((translation(30047)).encode("utf-8"),(translation(30048)).encode("utf-8"))
         if ok:
-            debugLog("Starting Playlist for %s" % urllib.parse.unquote(link),'Info')
+            debugLog("Starting Playlist for %s" % urllib.unquote(link),'Info')
             tvthekplayer.play(playlist)               
     else:
         debugLog("Running Listcallback from no autoplay openseries","Info")
         listCallback(False,pluginhandle)
 elif mode == 'unblacklistShow':
-    heading = translation(30040).encode('UTF-8') % urllib.parse.unquote(link).replace('+', ' ').strip()
+    heading = translation(30040).encode('UTF-8') % urllib.unquote(link).replace('+', ' ').strip()
     if xbmcgui.Dialog().yesno(heading, heading):
         unblacklistItem(link)
         xbmc.executebuiltin('Container.Refresh')
@@ -195,7 +190,7 @@ elif mode == 'getSearchHistory':
     listCallback(False,pluginhandle)
 elif mode == 'getSearchResults':
     if not link == None:
-        scraper.getSearchResults(urllib.parse.unquote(link))
+        scraper.getSearchResults(urllib.unquote(link))
     else:
         scraper.getSearchResults("")
     listCallback(False,pluginhandle)
