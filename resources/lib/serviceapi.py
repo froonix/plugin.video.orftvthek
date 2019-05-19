@@ -1,6 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+from future.standard_library import install_aliases
+install_aliases()
+
 import datetime
 import sys
 import time
@@ -17,7 +20,7 @@ from .Scraper import *
 class serviceAPI(Scraper):
 
 	__urlBase       = 'https://api-tvthek.orf.at/api/v3/'
-	__urlLive       = 'livestreams/24hours?limit=1000'
+	__urlLive       = 'livestreams/24hours?limit=20'
 	__urlMostViewed = 'page/startpage'
 	__urlNewest     = 'page/startpage/newest'
 	__urlSearch     = __urlBase + 'search/%s?limit=1000'
@@ -279,7 +282,9 @@ class serviceAPI(Scraper):
 				inputstreamAdaptive = True
 			except RuntimeError:
 				inputstreamAdaptive = False
-
+			
+			foundProgram = []
+			
 			for result in json.loads(response.read().decode('UTF-8')).get('_embedded').get('items'):
 				description     = result.get('description')
 				programName     = result.get('_embedded').get('channel').get('name')
@@ -287,23 +292,21 @@ class serviceAPI(Scraper):
 				livestreamEnd   = time.strptime(result.get('end')[0:19],   '%Y-%m-%dT%H:%M:%S')
 				duration        = max(time.mktime(livestreamEnd) - max(time.mktime(livestreamStart), time.mktime(time.localtime())), 1)
 				contextMenuItems = []
+				
+				if programName not in foundProgram:
+					foundProgram.append(programName)
 
-				# already finished
-				if time.mktime(livestreamEnd) < time.mktime(time.localtime()):
-					continue
-				# already playing
-				elif livestreamStart < time.localtime():
 					link = self.JSONStreamingURL(result.get('sources'))
 					if inputstreamAdaptive and result.get('restart'):
 						contextMenuItems.append(('Restart', 'RunPlugin(plugin://%s/?mode=liveStreamRestart&link=%s)' % (xbmcaddon.Addon().getAddonInfo('id'), result.get('id'))))
 				else:
 					link = sys.argv[0] + '?' + urllib.urlencode({'mode': 'liveStreamNotOnline', 'link': result.get('id')})
 
-				title = "[%s]%s %s (%s)" % (programName, '[Restart]' if inputstreamAdaptive and result.get('restart') else '', result.get('title'), time.strftime('%H:%M', livestreamStart))
+					title = "[%s]%s %s (%s)" % (programName, '[Restart]' if inputstreamAdaptive and result.get('restart') else '', result.get('title'), time.strftime('%H:%M', livestreamStart))
 
-				banner = self.JSONImage(result.get('_embedded').get('image'))
+					banner = self.JSONImage(result.get('_embedded').get('image'))
 
-				createListItem(title, banner, description, duration, time.strftime('%Y-%m-%d', livestreamStart), programName, link, True, False, self.defaultbackdrop, self.pluginhandle, contextMenuItems = contextMenuItems)
+					createListItem(title, banner, description, duration, time.strftime('%Y-%m-%d', livestreamStart), programName, link, True, False, self.defaultbackdrop, self.pluginhandle, contextMenuItems = contextMenuItems)
 		else:
 			xbmcgui.Dialog().notification(self.translation(30045).encode('UTF-8'), self.translation(30046).encode('UTF-8'), xbmcaddon.Addon().getAddonInfo('icon'))
 
@@ -311,7 +314,7 @@ class serviceAPI(Scraper):
 		try:
 			response = self.__makeRequest('livestream/' + link)
 			responseCode = response.getcode()
-		except urllib2.HTTPError as error:
+		except urllib.error.HTTPError as error:
 			responseCode = error.getcode()
 
 		if responseCode == 200:
